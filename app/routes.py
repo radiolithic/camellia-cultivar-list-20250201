@@ -14,8 +14,13 @@ from app.backup import backup_database
 bp = Blueprint('main', __name__)
 
 
-@bp.route('/')
+@bp.route('/', endpoint='index')
 def index():
+    return redirect(url_for('main.cultivar_list'))
+
+
+@bp.route('/table')
+def table_view():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 25, type=int)
     per_page = min(per_page, 100)
@@ -110,9 +115,6 @@ def cultivar_history(cultivar_id):
 
 @bp.route('/edit/<int:cultivar_id>')
 def edit_cultivar(cultivar_id):
-    if not session.get('authenticated'):
-        return redirect(url_for('main.index'))
-
     cultivar = db.get_or_404(Cultivar, cultivar_id)
 
     prev_cultivar = Cultivar.query.filter(Cultivar.id < cultivar_id).order_by(Cultivar.id.desc()).first()

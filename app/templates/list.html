@@ -4,7 +4,7 @@
 <style>main { max-width: none; }</style>
 <div class="list-controls">
     <div class="search-box">
-        <form method="get" action="/">
+        <form method="get" action="{{ url_for('main.table_view') }}">
             <input type="text" name="q" placeholder="Search cultivar name..." autocomplete="off">
         </form>
     </div>
@@ -36,7 +36,7 @@
 
 <ul class="cultivar-list">
     {% for c in cultivars %}
-    <li><a href="/?q={{ c.cultivar|urlencode }}">{{ c.cultivar }}</a></li>
+    <li><a href="{{ url_for('main.edit_cultivar', cultivar_id=c.id) }}">{{ c.cultivar }}</a></li>
     {% endfor %}
 </ul>
 {% endblock %}

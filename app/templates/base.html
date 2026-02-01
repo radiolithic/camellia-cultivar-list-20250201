@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gene's Camellias — Cultivar Database</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
 </head>
 <body>
     <header>
@@ -31,10 +31,6 @@
                     </form>
                 {% else %}
                     <button id="login-toggle" class="btn btn-sm btn-outline">Login</button>
-                    <form method="post" action="{{ url_for('main.login') }}" id="login-form" class="hidden">
-                        <input type="password" name="password" placeholder="Password" required>
-                        <button type="submit" class="btn btn-sm">Go</button>
-                    </form>
                 {% endif %}
             </nav>
         </div>
@@ -60,7 +56,7 @@
         var step = 5;
         var min = 50;
         var max = 200;
-        var zoom = parseInt(sessionStorage.getItem(KEY)) || 60;
+        var zoom = parseInt(sessionStorage.getItem(KEY)) || 100;
         var main = document.querySelector('main');
 
         function apply() {
@@ -81,6 +77,30 @@
         });
     })();
     </script>
+    {% if not authenticated %}
+    <div id="login-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <button id="modal-close" class="modal-close">&times;</button>
+            <h3>Login</h3>
+            <form method="post" action="{{ url_for('main.login') }}" id="login-form">
+                <input type="password" name="password" placeholder="Password" required autofocus>
+                <button type="submit" class="btn">Go</button>
+            </form>
+        </div>
+    </div>
+    <script>
+    (function() {
+        var modal = document.getElementById('login-modal');
+        var pwInput = modal.querySelector('input[type="password"]');
+        function open() { modal.classList.remove('hidden'); pwInput.focus(); }
+        function close() { modal.classList.add('hidden'); }
+        document.getElementById('login-toggle').addEventListener('click', open);
+        document.getElementById('modal-close').addEventListener('click', close);
+        modal.addEventListener('click', function(e) { if (e.target === modal) close(); });
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close(); });
+    })();
+    </script>
+    {% endif %}
     {% block scripts %}{% endblock %}
 </body>
 </html>

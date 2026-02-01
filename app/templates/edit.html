@@ -29,54 +29,65 @@
     <div class="edit-fields">
         <div class="field-group">
             <label for="f-epithet">Epithet</label>
-            <input type="text" id="f-epithet" name="epithet" value="{{ cultivar.epithet }}">
+            <input type="text" id="f-epithet" name="epithet" value="{{ cultivar.epithet }}"{% if not authenticated %} readonly{% endif %}>
         </div>
         <div class="field-group">
             <label for="f-category">Category</label>
-            <input type="text" id="f-category" name="category" value="{{ cultivar.category }}">
+            <input type="text" id="f-category" name="category" value="{{ cultivar.category }}"{% if not authenticated %} readonly{% endif %}>
         </div>
         <div class="field-group">
             <label for="f-color_form">Color / Form</label>
-            <input type="text" id="f-color_form" name="color_form" value="{{ cultivar.color_form }}">
+            <input type="text" id="f-color_form" name="color_form" value="{{ cultivar.color_form }}"{% if not authenticated %} readonly{% endif %}>
         </div>
         <div class="field-group field-group-tooltip">
             <label for="f-tagline">Tagline</label>
-            <input type="text" id="f-tagline" name="tagline" value="{{ cultivar.tagline }}">
+            <input type="text" id="f-tagline" name="tagline" value="{{ cultivar.tagline }}"{% if not authenticated %} readonly{% endif %}>
             <div class="tagline-tooltip">{{ cultivar.tagline }}</div>
         </div>
         <div class="field-group field-group-wide">
             <label for="f-description">Description</label>
-            <textarea id="f-description" name="description" rows="4">{{ cultivar.description }}</textarea>
+            <textarea id="f-description" name="description" rows="4"{% if not authenticated %} readonly{% endif %}>{{ cultivar.description }}</textarea>
         </div>
         <div class="field-group field-group-wide">
             <label>Notes</label>
+            {% if authenticated %}
             <div id="notes-editor">{{ cultivar.notes|safe }}</div>
+            {% else %}
+            <div id="notes-display" class="notes-readonly">{{ cultivar.notes|safe }}</div>
+            {% endif %}
         </div>
         <div class="field-group">
             <label for="f-image_url">Image URL (ICR)</label>
-            <input type="text" id="f-image_url" name="image_url" value="{{ cultivar.image_url }}">
+            <input type="text" id="f-image_url" name="image_url" value="{{ cultivar.image_url }}"{% if not authenticated %} readonly{% endif %}>
         </div>
         <div class="field-group">
             <label for="f-photo_url">Photo URL</label>
-            <input type="text" id="f-photo_url" name="photo_url" value="{{ cultivar.photo_url }}">
+            <input type="text" id="f-photo_url" name="photo_url" value="{{ cultivar.photo_url }}"{% if not authenticated %} readonly{% endif %}>
         </div>
     </div>
 
     <div class="edit-actions">
+        {% if authenticated %}
         <button id="save-btn" class="btn">Save</button>
         <span id="save-status" class="save-status"></span>
+        {% else %}
+        <button id="edit-btn" class="btn">Edit</button>
+        {% endif %}
     </div>
 
+    {% if authenticated %}
     <div class="history-section">
         <button id="history-toggle" class="btn btn-sm btn-back">Show Change History</button>
         <div id="history-panel" class="hidden"></div>
     </div>
+    {% endif %}
 </div>
 
 <div class="save-indicator" id="save-indicator"></div>
 {% endblock %}
 
 {% block scripts %}
+{% if authenticated %}
 <link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
 <script>
@@ -194,4 +205,14 @@
     });
 })();
 </script>
+{% else %}
+<script>
+(function() {
+    document.getElementById('edit-btn').addEventListener('click', function() {
+        var loginToggle = document.getElementById('login-toggle');
+        if (loginToggle) loginToggle.click();
+    });
+})();
+</script>
+{% endif %}
 {% endblock %}
