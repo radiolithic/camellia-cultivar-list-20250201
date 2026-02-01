@@ -429,6 +429,31 @@ td[contenteditable="true"]:focus {
 .save-status.error { color: #c0392b; font-weight: 600; }
 
 
+/* Tagline tooltip */
+.field-group-tooltip {
+    position: relative;
+}
+.tagline-tooltip {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    background: var(--fg);
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 4px;
+    margin-top: 4px;
+    line-height: 1.4;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.field-group-tooltip:hover .tagline-tooltip,
+.field-group-tooltip:focus-within .tagline-tooltip {
+    display: block;
+}
+
 /* Change history */
 .history-section {
     margin-top: 1.25rem;

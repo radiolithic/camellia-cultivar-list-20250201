@@ -39,9 +39,10 @@
             <label for="f-color_form">Color / Form</label>
             <input type="text" id="f-color_form" name="color_form" value="{{ cultivar.color_form }}">
         </div>
-        <div class="field-group">
+        <div class="field-group field-group-tooltip">
             <label for="f-tagline">Tagline</label>
             <input type="text" id="f-tagline" name="tagline" value="{{ cultivar.tagline }}">
+            <div class="tagline-tooltip">{{ cultivar.tagline }}</div>
         </div>
         <div class="field-group field-group-wide">
             <label for="f-description">Description</label>
