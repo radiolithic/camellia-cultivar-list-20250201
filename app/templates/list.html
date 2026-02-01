@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>main { max-width: none; }</style>
+<div class="list-controls">
+    <div class="search-box">
+        <form method="get" action="/">
+            <input type="text" name="q" placeholder="Search cultivar name..." autocomplete="off">
+        </form>
+    </div>
+    <div class="page-info">
+        Showing {{ pagination.first }} – {{ pagination.last }} of {{ pagination.total }} cultivars
+    </div>
+    <div class="list-pagination">
+        {% if pagination.has_prev %}
+            <a href="?page={{ pagination.prev_num }}&per_page={{ per_page }}" class="btn btn-sm">&laquo; Prev</a>
+        {% else %}
+            <span class="btn btn-sm disabled">&laquo; Prev</span>
+        {% endif %}
+
+        {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+            {% if p %}
+                <a href="?page={{ p }}&per_page={{ per_page }}" class="btn btn-sm {{ 'active' if p == pagination.page }}">{{ p }}</a>
+            {% else %}
+                <span class="btn btn-sm disabled">&hellip;</span>
+            {% endif %}
+        {% endfor %}
+
+        {% if pagination.has_next %}
+            <a href="?page={{ pagination.next_num }}&per_page={{ per_page }}" class="btn btn-sm">Next &raquo;</a>
+        {% else %}
+            <span class="btn btn-sm disabled">Next &raquo;</span>
+        {% endif %}
+    </div>
+</div>
+
+<ul class="cultivar-list">
+    {% for c in cultivars %}
+    <li><a href="/?q={{ c.cultivar|urlencode }}">{{ c.cultivar }}</a></li>
+    {% endfor %}
+</ul>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var COL_WIDTH = 200;
+    var ITEM_HEIGHT = 20;
+    var CHROME = 130;
+
+    function calcIdeal() {
+        var availH = window.innerHeight - CHROME;
+        var availW = window.innerWidth - 40;
+        var cols = Math.max(1, Math.floor(availW / COL_WIDTH));
+        var rows = Math.max(10, Math.floor(availH / ITEM_HEIGHT));
+        var ideal = Math.floor(cols * rows * 0.60);
+        ideal = Math.round(ideal / 10) * 10;
+        return Math.max(50, Math.min(ideal, 2000));
+    }
+
+    function applyIfNeeded(ideal) {
+        var params = new URLSearchParams(window.location.search);
+        var current = parseInt(params.get('per_page')) || 0;
+        if (!current || Math.abs(current - ideal) / ideal > 0.15) {
+            params.set('per_page', ideal);
+            if (!params.has('page')) params.set('page', '1');
+            window.location.search = params.toString();
+        }
+    }
+
+    // On load
+    applyIfNeeded(calcIdeal());
+
+    // On resize (debounced)
+    var timer;
+    window.addEventListener('resize', function() {
+        clearTimeout(timer);
+        timer = setTimeout(function() {
+            applyIfNeeded(calcIdeal());
+        }, 400);
+    });
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gene's Camellias — Cultivar Database</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <h1><a href="/">Gene's Camellias</a></h1>
+            <nav>
+                {% if view == 'list' %}
+                    <span class="zoom-control">
+                        Zoom:
+                        <button id="zoom-down" class="btn btn-sm btn-outline zoom-btn">−</button>
+                        <span id="zoom-value">100%</span>
+                        <button id="zoom-up" class="btn btn-sm btn-outline zoom-btn">+</button>
+                    </span>
+                {% endif %}
+                {% if view == 'list' %}
+                    <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline">Full</a>
+                {% else %}
+                    <a href="{{ url_for('main.cultivar_list') }}" class="btn btn-sm btn-outline">List</a>
+                {% endif %}
+                {% if authenticated %}
+                    <a href="{{ url_for('main.export_csv') }}" class="btn btn-sm">Export CSV</a>
+                    <form method="post" action="{{ url_for('main.logout') }}" class="inline">
+                        <button type="submit" class="btn btn-sm btn-outline">Logout</button>
+                    </form>
+                {% else %}
+                    <button id="login-toggle" class="btn btn-sm btn-outline">Login</button>
+                    <form method="post" action="{{ url_for('main.login') }}" id="login-form" class="hidden">
+                        <input type="password" name="password" placeholder="Password" required>
+                        <button type="submit" class="btn btn-sm">Go</button>
+                    </form>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+    <script>
+    (function() {
+        var display = document.getElementById('zoom-value');
+        if (!display) return;
+
+        var KEY = 'genes-zoom';
+        var step = 5;
+        var min = 50;
+        var max = 200;
+        var zoom = parseInt(sessionStorage.getItem(KEY)) || 60;
+        var main = document.querySelector('main');
+
+        function apply() {
+            main.style.zoom = (zoom / 100);
+            display.textContent = zoom + '%';
+            sessionStorage.setItem(KEY, zoom);
+        }
+
+        apply();
+
+        document.getElementById('zoom-down').addEventListener('click', function() {
+            zoom = Math.max(min, zoom - step);
+            apply();
+        });
+        document.getElementById('zoom-up').addEventListener('click', function() {
+            zoom = Math.min(max, zoom + step);
+            apply();
+        });
+    })();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

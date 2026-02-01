@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="controls">
+    <div class="search-box">
+        <form method="get" action="/">
+            <input type="text" name="q" value="{{ search }}" placeholder="Search cultivar name..." autocomplete="off">
+            <input type="hidden" name="per_page" value="{{ per_page }}">
+            {% if search %}<a href="/?per_page={{ per_page }}" class="clear-search">&times;</a>{% endif %}
+        </form>
+    </div>
+    <div class="page-info">
+        {% if search %}{{ pagination.total }} result{{ 's' if pagination.total != 1 }} for "{{ search }}"{% else %}Showing {{ pagination.first }} – {{ pagination.last }} of {{ pagination.total }} cultivars{% endif %}
+    </div>
+    <div class="per-page">
+        <label for="per-page-select">Rows:</label>
+        <select id="per-page-select" onchange="changePerPage(this.value)">
+            {% for n in [10, 25, 50, 100] %}
+            <option value="{{ n }}" {{ 'selected' if per_page == n }}>{{ n }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th class="col-cultivar">Cultivar</th>
+                <th class="col-epithet">Epithet</th>
+                <th class="col-category">Category</th>
+                <th class="col-color">Color / Form</th>
+                <th class="col-tagline">Tagline</th>
+                <th class="col-desc">Description</th>
+                <th class="col-notes">Notes</th>
+                <th class="col-photo">Photo</th>
+                <th class="col-img">ICR Photo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in cultivars %}
+            <tr data-id="{{ c.id }}">
+                <td class="col-cultivar">{% if c.image_url %}<a href="{{ c.image_url }}" target="_blank" rel="noopener">{{ c.cultivar }}</a>{% else %}{{ c.cultivar }}{% endif %}{% if authenticated %}<br><a href="{{ url_for('main.edit_cultivar', cultivar_id=c.id) }}" class="edit-link">Edit</a>{% endif %}</td>
+                <td class="col-epithet" data-field="epithet" {% if authenticated %}contenteditable="true"{% endif %}>{{ c.epithet }}</td>
+                <td class="col-category" data-field="category" {% if authenticated %}contenteditable="true"{% endif %}>{{ c.category }}</td>
+                <td class="col-color" data-field="color_form" {% if authenticated %}contenteditable="true"{% endif %}>{{ c.color_form }}</td>
+                <td class="col-tagline" data-field="tagline" {% if authenticated %}contenteditable="true"{% endif %}>{{ c.tagline }}</td>
+                <td class="col-desc" data-field="description" {% if authenticated %}contenteditable="true"{% endif %}>{{ c.description }}</td>
+                <td class="col-notes" data-field="notes" {% if authenticated %}contenteditable="true"{% endif %}>{{ c.notes|safe }}</td>
+                <td class="col-photo">
+                    {% if c.photo_url %}
+                        <img src="{{ c.photo_url }}" alt="{{ c.cultivar }}" loading="lazy">
+                    {% endif %}
+                </td>
+                <td class="col-img" data-field="image_url">
+                    {% if c.photo_url and c.image_url %}
+                        <a href="{{ c.image_url }}" target="_blank" rel="noopener"><img src="{{ c.photo_url }}" alt="{{ c.cultivar }}" loading="lazy"></a>
+                    {% elif c.photo_url %}
+                        <img src="{{ c.photo_url }}" alt="{{ c.cultivar }}" loading="lazy">
+                    {% elif c.image_url %}
+                        <a href="{{ c.image_url }}" target="_blank" rel="noopener">ICR</a>
+                    {% endif %}
+                    {% if authenticated %}
+                        <input type="text" class="img-url-input" value="{{ c.image_url }}" placeholder="URL" data-id="{{ c.id }}">
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="pagination">
+    {% if pagination.has_prev %}
+        <a href="?page={{ pagination.prev_num }}&per_page={{ per_page }}&q={{ search }}" class="btn btn-sm">&laquo; Prev</a>
+    {% else %}
+        <span class="btn btn-sm disabled">&laquo; Prev</span>
+    {% endif %}
+
+    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+        {% if p %}
+            <a href="?page={{ p }}&per_page={{ per_page }}&q={{ search }}" class="btn btn-sm {{ 'active' if p == pagination.page }}">{{ p }}</a>
+        {% else %}
+            <span class="btn btn-sm disabled">&hellip;</span>
+        {% endif %}
+    {% endfor %}
+
+    {% if pagination.has_next %}
+        <a href="?page={{ pagination.next_num }}&per_page={{ per_page }}&q={{ search }}" class="btn btn-sm">Next &raquo;</a>
+    {% else %}
+        <span class="btn btn-sm disabled">Next &raquo;</span>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

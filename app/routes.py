@@ -1,0 +1,128 @@
+import csv
+import io
+
+from flask import (
+    Blueprint, render_template, request, session,
+    redirect, url_for, jsonify, current_app, Response, flash
+)
+from app import db
+from app.models import Cultivar
+
+bp = Blueprint('main', __name__)
+
+
+@bp.route('/')
+def index():
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 25, type=int)
+    per_page = min(per_page, 100)
+    search = request.args.get('q', '').strip()
+
+    query = Cultivar.query
+    if search:
+        query = query.filter(Cultivar.cultivar.ilike(f'%{search}%'))
+
+    pagination = query.order_by(Cultivar.id).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+
+    return render_template(
+        'index.html',
+        cultivars=pagination.items,
+        pagination=pagination,
+        per_page=per_page,
+        search=search,
+        authenticated=session.get('authenticated', False),
+    )
+
+
+@bp.route('/login', methods=['POST'])
+def login():
+    password = request.form.get('password', '')
+    if password == current_app.config['ADMIN_PASSWORD']:
+        session['authenticated'] = True
+    else:
+        flash('Incorrect password.', 'error')
+    return redirect(url_for('main.index'))
+
+
+@bp.route('/logout', methods=['POST'])
+def logout():
+    session.pop('authenticated', None)
+    return redirect(url_for('main.index'))
+
+
+@bp.route('/api/cultivar/<int:cultivar_id>', methods=['PUT'])
+def update_cultivar(cultivar_id):
+    if not session.get('authenticated'):
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    cultivar = db.get_or_404(Cultivar, cultivar_id)
+    data = request.get_json()
+
+    editable = ['epithet', 'category', 'color_form', 'tagline', 'description', 'notes', 'image_url', 'photo_url']
+    for field in editable:
+        if field in data:
+            setattr(cultivar, field, data[field])
+
+    db.session.commit()
+    return jsonify(cultivar.to_dict())
+
+
+@bp.route('/edit/<int:cultivar_id>')
+def edit_cultivar(cultivar_id):
+    if not session.get('authenticated'):
+        return redirect(url_for('main.index'))
+
+    cultivar = db.get_or_404(Cultivar, cultivar_id)
+
+    prev_cultivar = Cultivar.query.filter(Cultivar.id < cultivar_id).order_by(Cultivar.id.desc()).first()
+    next_cultivar = Cultivar.query.filter(Cultivar.id > cultivar_id).order_by(Cultivar.id.asc()).first()
+
+    return render_template(
+        'edit.html',
+        cultivar=cultivar,
+        prev_id=prev_cultivar.id if prev_cultivar else None,
+        next_id=next_cultivar.id if next_cultivar else None,
+        authenticated=session.get('authenticated', False),
+    )
+
+
+@bp.route('/list')
+def cultivar_list():
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 500, type=int)
+    per_page = min(per_page, 2000)
+
+    pagination = Cultivar.query.order_by(Cultivar.cultivar).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+
+    return render_template(
+        'list.html',
+        cultivars=pagination.items,
+        pagination=pagination,
+        per_page=per_page,
+        view='list',
+        authenticated=session.get('authenticated', False),
+    )
+
+
+@bp.route('/api/export')
+def export_csv():
+    if not session.get('authenticated'):
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    cultivars = Cultivar.query.order_by(Cultivar.id).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Cultivar', 'Epithet', 'Category', 'Color / Form', 'Tagline', 'Description', 'Notes', 'Image URL'])
+    for c in cultivars:
+        writer.writerow([c.cultivar, c.epithet, c.category, c.color_form, c.tagline, c.description, c.notes, c.image_url])
+
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': 'attachment; filename=genes_enriched.csv'}
+    )
