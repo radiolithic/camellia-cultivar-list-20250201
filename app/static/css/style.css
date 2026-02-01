@@ -543,6 +543,10 @@ td[contenteditable="true"]:focus {
     font-size: 0.85em;
     margin-left: 0.15em;
 }
+.priority-icon {
+    font-size: 0.75em;
+    margin-left: 0.15em;
+}
 
 /* Checkbox field on edit page */
 .field-group-checkbox {

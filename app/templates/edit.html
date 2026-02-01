@@ -70,12 +70,19 @@
                 <input type="checkbox" id="f-validated" name="validated"{% if cultivar.validated %} checked{% endif %}>
                 <span>Validated</span>
             </label>
+            <label class="checkbox-label" style="margin-left: 1.5rem;">
+                <input type="checkbox" id="f-priority" name="priority"{% if cultivar.priority %} checked{% endif %}>
+                <span>Priority Item</span>
+            </label>
             {% else %}
             <label class="checkbox-label readonly">
                 {% if cultivar.validated %}
                 <span class="validated-icon">🌸</span> <span>Validated</span>
                 {% else %}
                 <span class="not-validated">Not validated</span>
+                {% endif %}
+                {% if cultivar.priority %}
+                <span class="priority-icon">⭐</span> <span>Priority</span>
                 {% endif %}
             </label>
             {% endif %}
@@ -145,6 +152,7 @@
             image_url: document.getElementById('f-image_url').value,
             photo_url: document.getElementById('f-photo_url').value,
             validated: document.getElementById('f-validated').checked,
+            priority: document.getElementById('f-priority').checked,
         };
 
         try {

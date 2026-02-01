@@ -36,7 +36,7 @@
 
 <ul class="cultivar-list">
     {% for c in cultivars %}
-    <li><a href="{{ url_for('main.edit_cultivar', cultivar_id=c.id) }}">{{ c.cultivar }}{% if c.validated %} <span class="validated-icon">🌸</span>{% endif %}</a></li>
+    <li><a href="{{ url_for('main.edit_cultivar', cultivar_id=c.id) }}">{{ c.cultivar }}{% if c.priority %} <span class="priority-icon">⭐</span>{% endif %}{% if c.validated %} <span class="validated-icon">🌸</span>{% endif %}</a></li>
     {% endfor %}
 </ul>
 {% endblock %}
