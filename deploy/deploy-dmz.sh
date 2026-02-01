@@ -4,32 +4,33 @@
 #
 # Prerequisites:
 #   1. Debian/Ubuntu DMZ server with SSH access as root (or sudo user)
-#   2. Domain genescamelliaworld.yd2.studio added to Cloudflare, DNS managed there
+#   2. Domain added to Cloudflare with DNS managed there
 #   3. Cloudflare Origin CA certificate + key (see STEP 0 below)
 #
 # Usage:
-#   1. Generate the Cloudflare Origin CA cert (see STEP 0)
-#   2. Copy this script to the DMZ server
-#   3. Edit the CONFIGURATION section below
-#   4. Run: sudo bash deploy-dmz.sh
+#   1. Edit deploy.conf with your settings
+#   2. Generate the Cloudflare Origin CA cert (see STEP 0)
+#   3. Run: sudo -E bash deploy-dmz.sh
 # ============================================================================
 
 set -euo pipefail
 
-# ── CONFIGURATION ──────────────────────────────────────────────────────────
+# ── Load configuration ────────────────────────────────────────────────────
 
-DOMAIN="genescamelliaworld.yd2.studio"
-APP_DIR="/var/www/genes"
-APP_USER="www-data"
-REPO_URL="https://github.com/radiolithic/camellia-cultivar-list-20250201.git"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+CONF_FILE="${SCRIPT_DIR}/deploy.conf"
 
-# Cloudflare Origin CA cert paths — you'll place the cert/key here
-SSL_CERT="/etc/ssl/cloudflare/${DOMAIN}.pem"
-SSL_KEY="/etc/ssl/cloudflare/${DOMAIN}.key"
+if [[ ! -f "$CONF_FILE" ]]; then
+    echo "ERROR: Config file not found: ${CONF_FILE}" >&2
+    echo "Copy deploy.conf.example to deploy.conf and edit it." >&2
+    exit 1
+fi
 
-# App secrets (change these!)
-SECRET_KEY="${SECRET_KEY:-$(openssl rand -hex 32)}"
+source "$CONF_FILE"
+
+# Environment variables override config file values
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
+SECRET_KEY="${SECRET_KEY:-$(openssl rand -hex 32)}"
 
 # ── STEP 0: Cloudflare Origin CA Certificate ───────────────────────────────
 #
@@ -40,12 +41,10 @@ ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
 #   2. SSL/TLS → Origin Server → Create Certificate
 #   3. Choose:
 #      - Private key type: RSA (2048)
-#      - Hostnames: genescamelliaworld.yd2.studio
+#      - Hostnames: your domain
 #      - Validity: 15 years (default)
 #   4. Cloudflare will show the Origin Certificate and Private Key
-#   5. Save them to files on the DMZ server:
-#      - Certificate → /etc/ssl/cloudflare/genescamelliaworld.yd2.studio.pem
-#      - Private Key → /etc/ssl/cloudflare/genescamelliaworld.yd2.studio.key
+#   5. Save them to the paths configured in deploy.conf (SSL_CERT / SSL_KEY)
 #
 # Then in Cloudflare dashboard:
 #   6. SSL/TLS → Overview → set mode to "Full (strict)"
@@ -58,7 +57,7 @@ err() { echo -e "\033[1;31mERROR: $1\033[0m" >&2; exit 1; }
 
 # ── PRE-FLIGHT CHECKS ─────────────────────────────────────────────────────
 
-[[ $EUID -eq 0 ]] || err "Run this script as root (sudo bash deploy-dmz.sh)"
+[[ $EUID -eq 0 ]] || err "Run this script as root (sudo -E bash deploy-dmz.sh)"
 
 if [[ ! -f "$SSL_CERT" ]] || [[ ! -f "$SSL_KEY" ]]; then
     err "Cloudflare Origin CA cert not found.\n\
@@ -74,6 +73,14 @@ if [[ -z "$ADMIN_PASSWORD" ]]; then
     read -rp "  Enter admin password now: " ADMIN_PASSWORD
     [[ -n "$ADMIN_PASSWORD" ]] || err "Admin password is required"
 fi
+
+log "Configuration:"
+echo "  Domain:       ${DOMAIN}"
+echo "  App dir:      ${APP_DIR}"
+echo "  Database:     ${DATABASE_URL}"
+echo "  Service:      ${SERVICE_NAME}"
+echo "  Workers:      ${GUNICORN_WORKERS}"
+echo "  SSL cert:     ${SSL_CERT}"
 
 # ── STEP 1: Install system packages ───────────────────────────────────────
 
@@ -111,15 +118,15 @@ log "Writing environment file"
 cat > "${APP_DIR}/.env" <<ENVEOF
 SECRET_KEY=${SECRET_KEY}
 ADMIN_PASSWORD=${ADMIN_PASSWORD}
-DATABASE_URL=sqlite:///${APP_DIR}/data/genes.db
+DATABASE_URL=${DATABASE_URL}
 ENVEOF
 chmod 600 "${APP_DIR}/.env"
 chown "${APP_USER}:${APP_USER}" "${APP_DIR}/.env"
 
 # ── STEP 6: Create systemd service ───────────────────────────────────────
 
-log "Creating systemd service"
-cat > /etc/systemd/system/genes.service <<SVCEOF
+log "Creating systemd service: ${SERVICE_NAME}"
+cat > "/etc/systemd/system/${SERVICE_NAME}.service" <<SVCEOF
 [Unit]
 Description=Gene's Camellias gunicorn app
 After=network.target
@@ -130,9 +137,9 @@ Group=${APP_USER}
 WorkingDirectory=${APP_DIR}
 EnvironmentFile=${APP_DIR}/.env
 ExecStart=${APP_DIR}/venv/bin/gunicorn \\
-    --workers 2 \\
-    --bind unix:${APP_DIR}/genes.sock \\
-    --timeout 120 \\
+    --workers ${GUNICORN_WORKERS} \\
+    --bind unix:${APP_DIR}/${SERVICE_NAME}.sock \\
+    --timeout ${GUNICORN_TIMEOUT} \\
     -m 007 \\
     run:app
 ExecReload=/bin/kill -HUP \$MAINPID
@@ -144,13 +151,13 @@ WantedBy=multi-user.target
 SVCEOF
 
 systemctl daemon-reload
-systemctl enable genes.service
-systemctl restart genes.service
+systemctl enable "${SERVICE_NAME}.service"
+systemctl restart "${SERVICE_NAME}.service"
 
 # ── STEP 7: Configure nginx with Cloudflare Origin CA SSL ─────────────────
 
-log "Configuring nginx"
-cat > /etc/nginx/sites-available/genes <<NGXEOF
+log "Configuring nginx site: ${SERVICE_NAME}"
+cat > "/etc/nginx/sites-available/${SERVICE_NAME}" <<NGXEOF
 # Redirect HTTP to HTTPS
 server {
     listen 80;
@@ -210,7 +217,7 @@ server {
     real_ip_header CF-Connecting-IP;
 
     location / {
-        proxy_pass http://unix:${APP_DIR}/genes.sock;
+        proxy_pass http://unix:${APP_DIR}/${SERVICE_NAME}.sock;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
@@ -226,13 +233,13 @@ server {
 NGXEOF
 
 # Enable site, remove default if present
-ln -sf /etc/nginx/sites-available/genes /etc/nginx/sites-enabled/genes
+ln -sf "/etc/nginx/sites-available/${SERVICE_NAME}" "/etc/nginx/sites-enabled/${SERVICE_NAME}"
 rm -f /etc/nginx/sites-enabled/default
 
 nginx -t || err "Nginx config test failed"
 systemctl reload nginx
 
-# ── STEP 8: SSL directory setup (if certs were placed before this ran) ────
+# ── STEP 8: SSL directory setup ───────────────────────────────────────────
 
 log "Setting SSL cert permissions"
 chmod 600 "$SSL_KEY"
@@ -244,8 +251,8 @@ log "Deployment complete!"
 echo ""
 echo "  Domain:    https://${DOMAIN}"
 echo "  App dir:   ${APP_DIR}"
-echo "  Service:   systemctl status genes"
-echo "  Nginx:     /etc/nginx/sites-available/genes"
+echo "  Service:   systemctl status ${SERVICE_NAME}"
+echo "  Nginx:     /etc/nginx/sites-available/${SERVICE_NAME}"
 echo "  SSL cert:  ${SSL_CERT}"
 echo ""
 echo "Cloudflare checklist:"
