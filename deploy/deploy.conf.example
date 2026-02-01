@@ -1,13 +1,16 @@
 # ============================================================================
 # Deployment configuration for Gene's Camellias
 #
-# Copy this file alongside deploy-dmz.sh and edit for your environment.
-# The deploy script sources this file automatically.
+# Copy this file to deploy.conf and edit for your environment:
+#   cp deploy.conf.example deploy.conf
+#
+# The deploy script sources deploy.conf automatically.
+# deploy.conf is gitignored — your secrets stay local.
 # ============================================================================
 
 # ── Domain & networking ────────────────────────────────────────────────────
 
-DOMAIN="genes.yd2.studio"
+DOMAIN="genes.example.com"
 
 # ── Paths ──────────────────────────────────────────────────────────────────
 
