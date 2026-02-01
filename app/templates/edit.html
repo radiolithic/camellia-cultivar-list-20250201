@@ -65,6 +65,11 @@
         <button id="save-btn" class="btn">Save</button>
         <span id="save-status" class="save-status"></span>
     </div>
+
+    <div class="history-section">
+        <button id="history-toggle" class="btn btn-sm btn-back">Show Change History</button>
+        <div id="history-panel" class="hidden"></div>
+    </div>
 </div>
 
 <div class="save-indicator" id="save-indicator"></div>
@@ -93,6 +98,10 @@
     const saveBtn = document.getElementById('save-btn');
     const saveStatus = document.getElementById('save-status');
 
+    const historyToggle = document.getElementById('history-toggle');
+    const historyPanel = document.getElementById('history-panel');
+    let historyLoaded = false;
+
     saveBtn.addEventListener('click', async () => {
         saveBtn.disabled = true;
         saveStatus.textContent = 'Saving...';
@@ -118,12 +127,68 @@
             if (!resp.ok) throw new Error('Save failed');
             saveStatus.textContent = 'Saved';
             saveStatus.classList.add('success');
+            historyLoaded = false;
+            if (!historyPanel.classList.contains('hidden')) {
+                loadHistory();
+            }
         } catch (e) {
             saveStatus.textContent = 'Error saving';
             saveStatus.classList.add('error');
         } finally {
             saveBtn.disabled = false;
             setTimeout(() => { saveStatus.textContent = ''; }, 3000);
+        }
+    });
+
+    function stripHtml(html) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = html;
+        return tmp.textContent || '';
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    async function loadHistory() {
+        historyPanel.innerHTML = '<p style="color:#666;font-size:0.85rem;">Loading...</p>';
+        try {
+            const resp = await fetch(`/api/cultivar/${cultivarId}/history`);
+            if (!resp.ok) throw new Error('Failed to load');
+            const records = await resp.json();
+            if (records.length === 0) {
+                historyPanel.innerHTML = '<p style="color:#666;font-size:0.85rem;">No changes recorded yet.</p>';
+                historyLoaded = true;
+                return;
+            }
+            let html = '';
+            records.forEach(e => {
+                const date = new Date(e.timestamp).toLocaleString();
+                const isNotes = e.field_name === 'notes';
+                const oldVal = isNotes ? stripHtml(e.old_value) : e.old_value;
+                const newVal = isNotes ? stripHtml(e.new_value) : e.new_value;
+                html += `<div class="history-entry">` +
+                    `<span class="history-date">${escapeHtml(date)}</span> ` +
+                    `<span class="history-field-name">${escapeHtml(e.field_name)}</span> ` +
+                    `<span class="history-old">${escapeHtml(oldVal || '(empty)')}</span>` +
+                    ` &rarr; ` +
+                    `<span class="history-new">${escapeHtml(newVal || '(empty)')}</span>` +
+                    `</div>`;
+            });
+            historyPanel.innerHTML = html;
+            historyLoaded = true;
+        } catch (e) {
+            historyPanel.innerHTML = '<p style="color:#c0392b;font-size:0.85rem;">Error loading history.</p>';
+        }
+    }
+
+    historyToggle.addEventListener('click', () => {
+        const hidden = historyPanel.classList.toggle('hidden');
+        historyToggle.textContent = hidden ? 'Show Change History' : 'Hide Change History';
+        if (!hidden && !historyLoaded) {
+            loadHistory();
         }
     });
 })();

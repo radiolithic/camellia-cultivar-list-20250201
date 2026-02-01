@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from app import db
 
 
@@ -15,6 +17,8 @@ class Cultivar(db.Model):
     image_url = db.Column(db.String(500), default='')
     photo_url = db.Column(db.String(500), default='')
 
+    history = db.relationship('CultivarHistory', backref='cultivar_ref', lazy='dynamic')
+
     def to_dict(self):
         return {
             'id': self.id,
@@ -28,3 +32,14 @@ class Cultivar(db.Model):
             'image_url': self.image_url,
             'photo_url': self.photo_url,
         }
+
+
+class CultivarHistory(db.Model):
+    __tablename__ = 'cultivar_history'
+
+    id = db.Column(db.Integer, primary_key=True)
+    cultivar_id = db.Column(db.Integer, db.ForeignKey('cultivar.id'), nullable=False)
+    field_name = db.Column(db.String(100), nullable=False)
+    old_value = db.Column(db.Text, default='')
+    new_value = db.Column(db.Text, default='')
+    timestamp = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))

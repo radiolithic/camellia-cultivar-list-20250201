@@ -429,6 +429,46 @@ td[contenteditable="true"]:focus {
 .save-status.error { color: #c0392b; font-weight: 600; }
 
 
+/* Change history */
+.history-section {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+.history-field-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #666;
+    margin-right: 0.35rem;
+}
+.history-entry {
+    font-size: 0.85rem;
+    padding: 0.3rem 0;
+    margin-bottom: 0.5rem;
+    line-height: 1.5;
+}
+.history-date {
+    font-size: 0.75rem;
+    color: #999;
+    margin-right: 0.25rem;
+}
+.history-old {
+    background: #fdecea;
+    color: #611a15;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    word-break: break-word;
+}
+.history-new {
+    background: var(--accent-light);
+    color: #1b4332;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    word-break: break-word;
+}
+
 @media (max-width: 768px) {
     header h1 { font-size: 1rem; }
     main { padding: 0 0.5rem; margin-top: 1rem; }

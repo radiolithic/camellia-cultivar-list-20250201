@@ -1,12 +1,15 @@
 import csv
 import io
+from datetime import datetime, timezone
+from pathlib import Path
 
 from flask import (
     Blueprint, render_template, request, session,
     redirect, url_for, jsonify, current_app, Response, flash
 )
 from app import db
-from app.models import Cultivar
+from app.models import Cultivar, CultivarHistory
+from app.backup import backup_database
 
 bp = Blueprint('main', __name__)
 
@@ -41,6 +44,12 @@ def login():
     password = request.form.get('password', '')
     if password == current_app.config['ADMIN_PASSWORD']:
         session['authenticated'] = True
+        try:
+            uri = current_app.config['SQLALCHEMY_DATABASE_URI']
+            db_path = uri.replace('sqlite:///', '')
+            backup_database(db_path)
+        except Exception:
+            pass
     else:
         flash('Incorrect password.', 'error')
     return redirect(url_for('main.index'))
@@ -63,10 +72,40 @@ def update_cultivar(cultivar_id):
     editable = ['epithet', 'category', 'color_form', 'tagline', 'description', 'notes', 'image_url', 'photo_url']
     for field in editable:
         if field in data:
+            old_value = getattr(cultivar, field) or ''
+            new_value = data[field] or ''
+            if old_value != new_value:
+                db.session.add(CultivarHistory(
+                    cultivar_id=cultivar.id,
+                    field_name=field,
+                    old_value=old_value,
+                    new_value=new_value,
+                    timestamp=datetime.now(timezone.utc),
+                ))
             setattr(cultivar, field, data[field])
 
     db.session.commit()
     return jsonify(cultivar.to_dict())
+
+
+@bp.route('/api/cultivar/<int:cultivar_id>/history')
+def cultivar_history(cultivar_id):
+    if not session.get('authenticated'):
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    db.get_or_404(Cultivar, cultivar_id)
+    records = (CultivarHistory.query
+               .filter_by(cultivar_id=cultivar_id)
+               .order_by(CultivarHistory.timestamp.desc())
+               .limit(100)
+               .all())
+
+    return jsonify([{
+        'field_name': r.field_name,
+        'old_value': r.old_value,
+        'new_value': r.new_value,
+        'timestamp': r.timestamp.isoformat() + 'Z',
+    } for r in records])
 
 
 @bp.route('/edit/<int:cultivar_id>')
