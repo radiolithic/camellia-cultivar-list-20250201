@@ -40,7 +40,7 @@
         <tbody>
             {% for c in cultivars %}
             <tr data-id="{{ c.id }}">
-                <td class="col-cultivar">{% if c.image_url %}<a href="{{ c.image_url }}" target="_blank" rel="noopener">{{ c.cultivar }}</a>{% else %}{{ c.cultivar }}{% endif %}{% if authenticated %}<br><a href="{{ url_for('main.edit_cultivar', cultivar_id=c.id) }}" class="edit-link">Edit</a>{% endif %}</td>
+                <td class="col-cultivar">{% if c.image_url %}<a href="{{ c.image_url }}" target="_blank" rel="noopener">{{ c.cultivar }}</a>{% else %}{{ c.cultivar }}{% endif %}{% if c.validated %} <span class="validated-icon">🌸</span>{% endif %}{% if authenticated %}<br><a href="{{ url_for('main.edit_cultivar', cultivar_id=c.id) }}" class="edit-link">Edit</a>{% endif %}</td>
                 <td class="col-epithet" data-field="epithet" {% if authenticated %}contenteditable="true"{% endif %}>{{ c.epithet }}</td>
                 <td class="col-category" data-field="category" {% if authenticated %}contenteditable="true"{% endif %}>{{ c.category }}</td>
                 <td class="col-color" data-field="color_form" {% if authenticated %}contenteditable="true"{% endif %}>{{ c.color_form }}</td>

@@ -538,6 +538,38 @@ td[contenteditable="true"]:focus {
     border-color: var(--accent);
 }
 
+/* Validated indicator */
+.validated-icon {
+    font-size: 0.85em;
+    margin-left: 0.15em;
+}
+
+/* Checkbox field on edit page */
+.field-group-checkbox {
+    display: flex;
+    align-items: center;
+    padding-top: 1.2rem;
+}
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+.checkbox-label.readonly {
+    cursor: default;
+}
+.checkbox-label input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--accent);
+}
+.not-validated {
+    font-size: 0.85rem;
+    color: #999;
+}
+
 @media (max-width: 768px) {
     header h1 { font-size: 1rem; }
     main { padding: 0 0.5rem; margin-top: 1rem; }

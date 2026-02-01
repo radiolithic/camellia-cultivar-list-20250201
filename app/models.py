@@ -16,6 +16,7 @@ class Cultivar(db.Model):
     notes = db.Column(db.Text, default='')
     image_url = db.Column(db.String(500), default='')
     photo_url = db.Column(db.String(500), default='')
+    validated = db.Column(db.Boolean, default=False)
 
     history = db.relationship('CultivarHistory', backref='cultivar_ref', lazy='dynamic')
 
@@ -31,6 +32,7 @@ class Cultivar(db.Model):
             'notes': self.notes,
             'image_url': self.image_url,
             'photo_url': self.photo_url,
+            'validated': self.validated,
         }
 
 

@@ -64,6 +64,22 @@
             <label for="f-photo_url">Photo URL</label>
             <input type="text" id="f-photo_url" name="photo_url" value="{{ cultivar.photo_url }}"{% if not authenticated %} readonly{% endif %}>
         </div>
+        <div class="field-group field-group-checkbox">
+            {% if authenticated %}
+            <label class="checkbox-label">
+                <input type="checkbox" id="f-validated" name="validated"{% if cultivar.validated %} checked{% endif %}>
+                <span>Validated</span>
+            </label>
+            {% else %}
+            <label class="checkbox-label readonly">
+                {% if cultivar.validated %}
+                <span class="validated-icon">🌸</span> <span>Validated</span>
+                {% else %}
+                <span class="not-validated">Not validated</span>
+                {% endif %}
+            </label>
+            {% endif %}
+        </div>
     </div>
 
     <div class="edit-actions">
@@ -128,6 +144,7 @@
             notes: quill.root.innerHTML,
             image_url: document.getElementById('f-image_url').value,
             photo_url: document.getElementById('f-photo_url').value,
+            validated: document.getElementById('f-validated').checked,
         };
 
         try {

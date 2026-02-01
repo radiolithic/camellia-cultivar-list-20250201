@@ -74,6 +74,19 @@ def update_cultivar(cultivar_id):
     cultivar = db.get_or_404(Cultivar, cultivar_id)
     data = request.get_json()
 
+    if 'validated' in data:
+        old_val = cultivar.validated
+        new_val = bool(data['validated'])
+        if old_val != new_val:
+            db.session.add(CultivarHistory(
+                cultivar_id=cultivar.id,
+                field_name='validated',
+                old_value=str(old_val),
+                new_value=str(new_val),
+                timestamp=datetime.now(timezone.utc),
+            ))
+        cultivar.validated = new_val
+
     editable = ['epithet', 'category', 'color_form', 'tagline', 'description', 'notes', 'image_url', 'photo_url']
     for field in editable:
         if field in data:
