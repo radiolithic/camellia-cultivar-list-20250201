@@ -26,10 +26,15 @@ if [[ ! -f "$CONF_FILE" ]]; then
     exit 1
 fi
 
+# Save any env vars set before sourcing so they take priority
+_ENV_ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
+_ENV_SECRET_KEY="${SECRET_KEY:-}"
+
 source "$CONF_FILE"
 
 # Environment variables override config file values
-ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
+[[ -n "$_ENV_ADMIN_PASSWORD" ]] && ADMIN_PASSWORD="$_ENV_ADMIN_PASSWORD"
+[[ -n "$_ENV_SECRET_KEY" ]] && SECRET_KEY="$_ENV_SECRET_KEY"
 SECRET_KEY="${SECRET_KEY:-$(openssl rand -hex 32)}"
 
 # ── STEP 0: Cloudflare Origin CA Certificate ───────────────────────────────
