@@ -65,6 +65,39 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // Boolean checkbox toggles
+    var boolToggles = document.querySelectorAll('.bool-toggle');
+    boolToggles.forEach(function (cb) {
+        cb.addEventListener('change', function () {
+            var row = this.closest('tr');
+            var id = row.dataset.id;
+            var field = this.dataset.field;
+            var body = {};
+            body[field] = this.checked;
+
+            fetch('/api/cultivar/' + id, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            })
+            .then(function (res) {
+                if (!res.ok) throw new Error('Save failed');
+                return res.json();
+            })
+            .then(function () {
+                indicator.textContent = 'Saved';
+                indicator.className = 'save-indicator show';
+                setTimeout(function () { indicator.className = 'save-indicator'; }, 1500);
+            })
+            .catch(function () {
+                indicator.textContent = 'Error saving';
+                indicator.className = 'save-indicator show error';
+                setTimeout(function () { indicator.className = 'save-indicator'; }, 2500);
+                cb.checked = !cb.checked;
+            });
+        });
+    });
+
     // Image URL inputs
     var imgInputs = document.querySelectorAll('.img-url-input');
     imgInputs.forEach(function (input) {

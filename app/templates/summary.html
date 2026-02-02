@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="controls">
+    <div class="search-box">
+        <form method="get" action="{{ url_for('main.summary_view') }}">
+            <input type="text" name="q" value="{{ search }}" placeholder="Search cultivar name..." autocomplete="off">
+            {% if search %}<a href="{{ url_for('main.summary_view') }}" class="clear-search">&times;</a>{% endif %}
+        </form>
+    </div>
+    <div class="page-info">
+        {% if search %}{{ cultivars|length }} result{{ 's' if cultivars|length != 1 }} for "{{ search }}"{% else %}{{ cultivars|length }} cultivars{% endif %}
+    </div>
+</div>
+
+<div class="table-wrap">
+    <table class="summary-table">
+        <thead>
+            <tr>
+                <th class="col-validated">V</th>
+                <th class="col-priority">P</th>
+                <th class="col-cultivar">Cultivar</th>
+                <th class="col-epithet">Epithet</th>
+                <th class="col-category">Cat</th>
+                <th class="col-color">Color / Form</th>
+                <th class="col-tagline">Tagline</th>
+                <th class="col-desc">Description</th>
+                <th class="col-notes">Notes</th>
+                <th class="col-icr">ICR</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in cultivars %}
+            <tr data-id="{{ c.id }}">
+                <td class="col-validated"><input type="checkbox" class="bool-toggle" data-field="validated" {{ 'checked' if c.validated }} {{ '' if authenticated else 'disabled' }}></td>
+                <td class="col-priority"><input type="checkbox" class="bool-toggle" data-field="priority" {{ 'checked' if c.priority }} {{ '' if authenticated else 'disabled' }}></td>
+                <td class="col-cultivar" title="{{ c.cultivar }}">{{ c.cultivar }}{% if c.validated %} <span class="validated-icon">🌸</span>{% endif %}{% if authenticated %} <a href="{{ url_for('main.edit_cultivar', cultivar_id=c.id) }}" class="edit-link">Edit</a>{% endif %}</td>
+                <td class="col-epithet" title="{{ c.epithet }}" data-field="epithet" {% if authenticated %}contenteditable="true"{% endif %}>{{ c.epithet }}</td>
+                <td class="col-category" title="{{ c.category }}" data-field="category" {% if authenticated %}contenteditable="true"{% endif %}>{{ c.category }}</td>
+                <td class="col-color" title="{{ c.color_form }}" data-field="color_form" {% if authenticated %}contenteditable="true"{% endif %}>{{ c.color_form }}</td>
+                <td class="col-tagline" title="{{ c.tagline }}">{{ c.tagline }}</td>
+                <td class="col-desc" title="{{ c.description }}">{{ c.description }}</td>
+                <td class="col-notes" title="{{ c.notes|striptags }}">{{ c.notes|striptags }}</td>
+                <td class="col-icr">{% if c.image_url %}<a href="{{ c.image_url }}" target="_blank" rel="noopener">ICR</a>{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

@@ -143,6 +143,25 @@ def edit_cultivar(cultivar_id):
     )
 
 
+@bp.route('/summary')
+def summary_view():
+    search = request.args.get('q', '').strip()
+
+    query = Cultivar.query
+    if search:
+        query = query.filter(Cultivar.cultivar.ilike(f'%{search}%'))
+
+    cultivars = query.order_by(Cultivar.id).all()
+
+    return render_template(
+        'summary.html',
+        cultivars=cultivars,
+        search=search,
+        view='summary',
+        authenticated=session.get('authenticated', False),
+    )
+
+
 @bp.route('/list')
 def cultivar_list():
     page = request.args.get('page', 1, type=int)

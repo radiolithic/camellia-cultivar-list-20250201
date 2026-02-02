@@ -19,10 +19,14 @@
                         <button id="zoom-up" class="btn btn-sm btn-outline zoom-btn">+</button>
                     </span>
                 {% endif %}
-                {% if view == 'list' %}
-                    <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline">Full</a>
-                {% else %}
+                {% if view != 'list' %}
                     <a href="{{ url_for('main.cultivar_list') }}" class="btn btn-sm btn-outline">List</a>
+                {% endif %}
+                {% if view != 'summary' %}
+                    <a href="{{ url_for('main.summary_view') }}" class="btn btn-sm btn-outline">Summary</a>
+                {% endif %}
+                {% if view == 'list' or view == 'summary' %}
+                    <a href="{{ url_for('main.table_view') }}" class="btn btn-sm btn-outline">Full</a>
                 {% endif %}
                 {% if authenticated %}
                     <a href="{{ url_for('main.export_csv') }}" class="btn btn-sm">Export CSV</a>

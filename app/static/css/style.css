@@ -300,6 +300,49 @@ td[contenteditable="true"]:focus {
     text-decoration: underline;
 }
 
+/* Summary view — boolean columns */
+.col-validated, .col-priority {
+    width: 30px;
+    min-width: 30px;
+    text-align: center;
+}
+.col-validated input, .col-priority input {
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+.col-validated input:disabled, .col-priority input:disabled {
+    cursor: default;
+}
+
+/* Summary view */
+.summary-table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+.summary-table .col-cultivar {
+    max-width: 150px;
+}
+.summary-table .col-epithet {
+    max-width: 200px;
+}
+.summary-table .col-category {
+    max-width: 60px;
+}
+.summary-table .col-color {
+    max-width: 160px;
+}
+.summary-table .col-tagline {
+    max-width: 220px;
+}
+.summary-table .col-desc {
+    max-width: 280px;
+}
+.summary-table .col-notes {
+    max-width: 220px;
+}
+
 /* Flash messages */
 .flash-messages {
     margin-bottom: 0.75rem;
